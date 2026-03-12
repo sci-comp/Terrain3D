@@ -117,6 +117,7 @@ extends Node3D
 var offsets: Array[Vector3]
 var last_pos: Vector3 = Vector3.ZERO
 var particle_nodes: Array[GPUParticles3D]
+var _cross_quad_mesh: ArrayMesh  # auto-generated perpendicular quad for cross-quad look
 
 
 func _ready() -> void:
@@ -147,6 +148,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _create_grid() -> void:
+	_cross_quad_mesh = null  # regenerate if mesh changed
 	_destroy_grid()
 	if not terrain:
 		return
@@ -171,6 +173,11 @@ func _create_grid() -> void:
 			particle_node.amount_ratio = 1.0
 			particle_node.process_material = process_material
 			particle_node.draw_pass_1 = mesh
+			# Auto-generate the perpendicular quad for a cross-quad appearance.
+			if mesh is QuadMesh:
+				if not _cross_quad_mesh:
+					_cross_quad_mesh = _make_cross_quad(mesh)
+				particle_node.draw_pass_2 = _cross_quad_mesh
 			particle_node.speed_scale = 1.0
 			particle_node.custom_aabb = aabb
 			particle_node.cast_shadow = shadow_mode
@@ -235,3 +242,35 @@ func _update_process_parameters() -> void:
 			RenderingServer.material_set_param(process_rid, "instance_spacing", instance_spacing)
 			RenderingServer.material_set_param(process_rid, "instance_rows", rows)
 			RenderingServer.material_set_param(process_rid, "max_dist", min_draw_distance)
+
+
+# Builds a quad that faces the X axis (perpendicular to the default Z-facing QuadMesh),
+# matching the source QuadMesh's dimensions. Used as draw_pass_2 for the cross-quad look.
+func _make_cross_quad(source: QuadMesh) -> ArrayMesh:
+	var w: float = source.size.x * 0.5
+	var h: float = source.size.y * 0.5
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	# Vertices span Y (height) and Z (width), with X = 0 — normal points along +X.
+	# UV.y = 0 at the top row, UV.y = 1 at the bottom row, matching QuadMesh convention.
+	arrays[Mesh.ARRAY_VERTEX] = PackedVector3Array([
+		Vector3(0.0,  h, -w),  # top-left   UV(0,0)
+		Vector3(0.0,  h,  w),  # top-right  UV(1,0)
+		Vector3(0.0, -h, -w),  # bot-left   UV(0,1)
+		Vector3(0.0, -h,  w)]) # bot-right  UV(1,1)
+	arrays[Mesh.ARRAY_NORMAL] = PackedVector3Array([
+		Vector3(1.0, 0.0, 0.0), Vector3(1.0, 0.0, 0.0),
+		Vector3(1.0, 0.0, 0.0), Vector3(1.0, 0.0, 0.0)])
+	# Tangent along -Z (w = 1.0 for right-handed orientation)
+	arrays[Mesh.ARRAY_TANGENT] = PackedFloat32Array([
+		0.0, 0.0, -1.0, 1.0,
+		0.0, 0.0, -1.0, 1.0,
+		0.0, 0.0, -1.0, 1.0,
+		0.0, 0.0, -1.0, 1.0])
+	arrays[Mesh.ARRAY_TEX_UV] = PackedVector2Array([
+		Vector2(0.0, 0.0), Vector2(1.0, 0.0),
+		Vector2(0.0, 1.0), Vector2(1.0, 1.0)])
+	arrays[Mesh.ARRAY_INDEX] = PackedInt32Array([0, 2, 1, 1, 2, 3])
+	var arr_mesh := ArrayMesh.new()
+	arr_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return arr_mesh
