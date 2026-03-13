@@ -1,29 +1,19 @@
 // Copyright © 2025 Cory Petkovsek, Roope Palmroos, and Contributors.
 //
-// Grass shader for a cross-quad mesh (two perpendicular quads per particle).
-// Designed for use with QuadMesh (draw_pass_1) + PlaneMesh FACE_X (draw_pass_2).
-//
-// Wind and color logic mirrors the original grass.gdshader, with two changes:
-//   1. Height factor is derived from UV.y instead of VERTEX.y, which works
-//      correctly for both QuadMesh and PlaneMesh FACE_X (both map UV.y to world Y,
-//      with UV.y = 0 at the tip and UV.y = 1 at the base).
-//   2. Ribbon tip-pinching is removed; alpha cutout via discard replaces it.
-//      Using discard (rather than ALPHA_SCISSOR_THRESHOLD) keeps the shader in
-//      the opaque render queue, which is important for large particle counts.
+// Variant of grass.gdshader for use with a flat QuadMesh (no ribbon pinching).
+// The only functional difference: height factor uses UV.y instead of VERTEX.y,
+// since a QuadMesh has no meaningful vertical vertex offset to read from.
 
 shader_type spatial;
 
-render_mode skip_vertex_transform, cull_disabled, blend_mix, depth_draw_opaque;
+render_mode skip_vertex_transform, cull_disabled, blend_mix;
 
 uniform vec2 wind_direction = vec2(1.0, 1.0);
-uniform sampler2D grass_texture : hint_default_white, filter_linear_mipmap, repeat_disable;
-uniform float alpha_scissor_threshold : hint_range(0.0, 1.0) = 0.5;
 
 varying vec4 data;
 
 void vertex() {
-	// Height factor: 1.0 at the tip (UV.y = 0), 0.0 at the base (UV.y = 1).
-	// UV.y maps to world Y on both QuadMesh and PlaneMesh FACE_X.
+	// Height factor from UV: 1.0 at tip (UV.y = 0), 0.0 at base (UV.y = 1).
 	data[2] = 1.0 - UV.y;
 	data[2] *= data[2]; // make non-linear
 
@@ -62,15 +52,10 @@ void vertex() {
 }
 
 void fragment() {
-	vec4 tex = texture(grass_texture, UV);
-	// Discard transparent pixels (keeps shader in opaque render queue).
-	if (tex.a < alpha_scissor_threshold) discard;
-
-	// Base color modulated by texture RGB.
+	// Hard coded color.
 	ALBEDO = vec3(0.20, 0.22, 0.05) * (data[2] * 0.5 + 0.5);
 	ALBEDO.rg *= (data.rg * 0.3 + 0.9);
 	ALBEDO *= pow(COLOR.rgb, vec3(2.2));
-	ALBEDO *= tex.rgb;
 	// Modify roughness / specular based on wind force for added detail
 	float spec_rough = clamp(max(data[2], data[3]), 0., 1.);
 	ROUGHNESS = 1. - spec_rough;
