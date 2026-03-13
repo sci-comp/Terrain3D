@@ -5,6 +5,7 @@ shader_type spatial;
 render_mode skip_vertex_transform, cull_disabled, blend_mix;
 
 uniform vec2 wind_direction = vec2(1.0, 1.0);
+uniform vec4 base_color : source_color = vec4(0.20, 0.22, 0.05, 1.0);
 
 varying vec4 data;
 
@@ -53,8 +54,7 @@ void vertex() {
 }
 
 void fragment() {
-	// Hard coded color.
-	ALBEDO = vec3(0.20, 0.22, 0.05) * (data[2] * 0.5 + 0.5);
+	ALBEDO = base_color.rgb * (data[2] * 0.5 + 0.5);
 	ALBEDO.rg *= (data.rg * 0.3 + 0.9);
 	ALBEDO *= pow(COLOR.rgb, vec3(2.2));
 	// Modify roughness / specular based on wind force for added detail
