@@ -10,6 +10,7 @@ render_mode skip_vertex_transform, cull_disabled, blend_mix;
 
 uniform vec2 wind_direction = vec2(1.0, 1.0);
 uniform vec4 base_color : source_color = vec4(0.20, 0.22, 0.05, 1.0);
+uniform sampler2D grass_texture : hint_default_white, filter_linear_mipmap;
 
 varying vec4 data;
 
@@ -53,6 +54,8 @@ void vertex() {
 }
 
 void fragment() {
+	vec4 tex = texture(grass_texture, UV);
+	if (tex.a < 0.5) discard;
 	ALBEDO = base_color.rgb * (data[2] * 0.5 + 0.5);
 	ALBEDO.rg *= (data.rg * 0.3 + 0.9);
 	ALBEDO *= pow(COLOR.rgb, vec3(2.2));
