@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://d3sr0a7dxfkr8"]
+[gd_scene load_steps=5 format=3 uid="uid://d3sr0a7dxfkr8"]
 
 [ext_resource type="Script" uid="uid://bp7r4ppgq1m0g" path="res://addons/terrain_3d/extras/particle_example/terrain_3D_particles.gd" id="1_gl3qg"]
 [ext_resource type="Material" uid="uid://el5y10hnh13g" path="res://addons/terrain_3d/extras/particle_example/process_material.tres" id="2_2gon1"]
@@ -6,12 +6,6 @@
 
 [sub_resource type="QuadMesh" id="QuadMesh_grass"]
 size = Vector2(0.18, 0.9)
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_grass_cross"]
-orientation = 0
-size = Vector2(0.18, 0.9)
-subdivide_width = 0
-subdivide_depth = 0
 
 [node name="Terrain3DParticles" type="Node3D"]
 script = ExtResource("1_gl3qg")
@@ -22,7 +16,6 @@ rows = 96
 amount = 9216
 process_material = ExtResource("2_2gon1")
 mesh = SubResource("QuadMesh_grass")
-mesh_2 = SubResource("PlaneMesh_grass_cross")
 shadow_mode = 0
 mesh_material_override = ExtResource("3_cqmat")
 min_draw_distance = 60.0

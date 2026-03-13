@@ -80,9 +80,6 @@ extends Node3D
 ## The mesh that each particle will render
 @export var mesh: Mesh
 
-## Optional second draw pass mesh (e.g. a perpendicular quad for a cross-quad look)
-@export var mesh_2: Mesh
-
 @export var shadow_mode: GeometryInstance3D.ShadowCastingSetting = (
 		GeometryInstance3D.ShadowCastingSetting.SHADOW_CASTING_SETTING_ON):
 	set(value):
@@ -174,7 +171,6 @@ func _create_grid() -> void:
 			particle_node.amount_ratio = 1.0
 			particle_node.process_material = process_material
 			particle_node.draw_pass_1 = mesh
-			particle_node.draw_pass_2 = mesh_2
 			particle_node.speed_scale = 1.0
 			particle_node.custom_aabb = aabb
 			particle_node.cast_shadow = shadow_mode
@@ -239,4 +235,3 @@ func _update_process_parameters() -> void:
 			RenderingServer.material_set_param(process_rid, "instance_spacing", instance_spacing)
 			RenderingServer.material_set_param(process_rid, "instance_rows", rows)
 			RenderingServer.material_set_param(process_rid, "max_dist", min_draw_distance)
-
